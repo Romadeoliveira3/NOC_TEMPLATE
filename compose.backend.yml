@@ -1,0 +1,95 @@
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    volumes:
+      - app-db-data:/var/lib/postgresql/data/pgdata
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?Variable not set}
+      POSTGRES_USER: ${POSTGRES_USER?Variable not set}
+      POSTGRES_DB: ${POSTGRES_DB?Variable not set}
+    ports:
+      - "5432:5432"
+
+  backend:
+    image: ${DOCKER_IMAGE_BACKEND:-backend}:${TAG:-latest}
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+      PROJECT_NAME: ${PROJECT_NAME:-NOC API}
+      FRONTEND_HOST: ${FRONTEND_HOST:-http://localhost:5173}
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-http://localhost,http://localhost:5173}
+      SECRET_KEY: ${SECRET_KEY?Variable not set}
+      FIRST_SUPERUSER: ${FIRST_SUPERUSER?Variable not set}
+      FIRST_SUPERUSER_PASSWORD: ${FIRST_SUPERUSER_PASSWORD?Variable not set}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_TLS: ${SMTP_TLS:-true}
+      SMTP_SSL: ${SMTP_SSL:-false}
+      EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL:-}
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB?Variable not set}
+      POSTGRES_USER: ${POSTGRES_USER?Variable not set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?Variable not set}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    command:
+      - bash
+      - -c
+      - |
+        set -e
+        bash scripts/prestart.sh
+        if [ "$$ENVIRONMENT" = "local" ]; then
+          exec fastapi run --reload app/main.py
+        fi
+        exec fastapi run --workers 4 app/main.py
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    develop:
+      watch:
+        - path: ./backend
+          action: sync
+          target: /app/backend
+          ignore:
+            - ./backend/.venv
+            - .venv
+        - path: ./backend/pyproject.toml
+          action: rebuild
+    volumes:
+      - ./backend/htmlcov:/app/backend/htmlcov
+
+  adminer:
+    image: adminer
+    restart: unless-stopped
+    profiles:
+      - tools
+    depends_on:
+      - db
+    environment:
+      ADMINER_DESIGN: pepa-linha-dark
+    ports:
+      - "8080:8080"
+
+volumes:
+  app-db-data:

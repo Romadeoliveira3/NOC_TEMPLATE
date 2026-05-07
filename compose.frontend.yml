@@ -1,0 +1,12 @@
+services:
+  frontend:
+    image: ${DOCKER_IMAGE_FRONTEND:-frontend}:${TAG:-latest}
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-}
+        NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "5173:80"

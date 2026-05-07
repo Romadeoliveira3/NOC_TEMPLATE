@@ -25,9 +25,7 @@ If you are developing an API-only app and want to remove the frontend, you can d
 
 * Remove the `./frontend` directory.
 
-* In the `compose.yml` file, remove the whole service / section `frontend`.
-
-* In the `compose.override.yml` file, remove the whole service / section `frontend` and `playwright`.
+* Remove the `compose.frontend.yml` file.
 
 Done, you have a frontend-less (api-only) app. 🤓
 
@@ -57,7 +55,11 @@ bash ./scripts/generate-client.sh
 
 * Start the Docker Compose stack.
 
-* Download the OpenAPI JSON file from `http://localhost/api/v1/openapi.json` and copy it to a new file `openapi.json` at the root of the `frontend` directory.
+```bash
+docker compose -f compose.backend.yml -f compose.frontend.yml up -d --build
+```
+
+* Download the OpenAPI JSON file from `http://localhost:5173/api/v1/openapi.json` and copy it to a new file `openapi.json` at the root of the `frontend` directory.
 
 * To generate the frontend client, run:
 
@@ -71,7 +73,9 @@ Notice that everytime the backend changes (changing the OpenAPI schema), you sho
 
 ## Using a Remote API
 
-If you want to use a remote API, you can set the environment variable `VITE_API_URL` to the URL of the remote API. For example, you can set it in the `frontend/.env` file:
+When the frontend runs from Docker, Nginx proxies `/api`, `/docs`, and `/redoc` to the backend service. In that mode, leave `VITE_API_URL` empty so the generated client calls the same origin.
+
+If you want to bypass the reverse proxy and use a remote API, set the environment variable `VITE_API_URL` to the URL of the remote API. For example, you can set it in the `frontend/.env` file:
 
 ```env
 VITE_API_URL=https://api.my-domain.example.com
@@ -95,7 +99,7 @@ The frontend code is structured as follows:
 The frontend includes initial end-to-end tests using Playwright. To run the tests, you need to have the Docker Compose stack running. Start the stack with the following command:
 
 ```bash
-docker compose up -d --wait backend
+docker compose -f compose.backend.yml -f compose.frontend.yml up -d --build
 ```
 
 Then, you can run the tests with the following command:
@@ -113,7 +117,7 @@ bunx playwright test --ui
 To stop and remove the Docker Compose stack and clean the data created in tests, use the following command:
 
 ```bash
-docker compose down -v
+docker compose -f compose.backend.yml -f compose.frontend.yml down -v
 ```
 
 To update the tests, navigate to the tests directory and modify the existing test files or add new ones as needed.
