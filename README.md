@@ -247,7 +247,6 @@ Antes de staging ou produção, troque pelo menos:
 
 - `SECRET_KEY`
 - `POSTGRES_PASSWORD`
-- `FIRST_SUPERUSER_PASSWORD`
 
 Gere secrets com:
 
