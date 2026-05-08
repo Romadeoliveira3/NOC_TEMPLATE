@@ -2,22 +2,10 @@ SESSION_COOKIE_NAME = "pec_mock_session"
 
 MOCK_CONFIG = {
     "id": "1",
-    "smtpConfigurado": False,
-    "internetHabilitada": True,
-    "linkInstalacaoConfigurado": True,
-    "govBREnabled": False,
     "versao": "5.4.36",
-    "buscaCidadaoPorPropriedadesEnabled": False,
-    "oldPecConnected": True,
-    "firebaseEnabled": False,
-    "ativado": True,
-    "treinamento": True,
-    "isPrescricaoDigitalEnabled": False,
-    "rocksdbEnabled": True,
     "tipoInstalacao": "PRONTUARIO",
-    "cadastroDomiciliarViaCdsEnabled": False,
-    "anexoArquivosEnabled": True,
-    "frontendLogLevel": "OFF",
+    "govBREnabled": False,
+    "ativado": True,
     "__typename": "Info",
 }
 
